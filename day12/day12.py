@@ -1,3 +1,5 @@
+import time
+
 class Node:
     def __init__(self,possition,end,height):
         self.height = height
@@ -32,17 +34,12 @@ def distance(curr,end):
 def sortQueue(queue):
     queue.sort(key=lambda x: x.distanceFromStart + x.minDistanceToEnd)
 
-def getQueueObjectByPos(queue,pos):
-    for node in queue:
-        if node.possition == pos:
-            return node
+def getQueueObjectByPos(qMap,pos):
+    return qMap[pos[1]][pos[0]]
     
 
 def wasVisited(beenTo,pos):
-    for node in beenTo:
-        if node.possition == pos:
-            return True
-    return False
+    return beenTo[pos[1]][pos[0]]
 
 def loadData(data):
     with open("day12/data.txt","r") as file:
@@ -62,40 +59,56 @@ def loadData(data):
         return start,end
                 
 def findShortestRoute(data,start,end):
+    
     width,height = len(data[0]),len(data)
-    queue = []
+    nodeMap = []
+    activeNodes = []
     for idxY, row in enumerate(data):
+        nodeRow = []
         for idxX, _ in enumerate(row):
-            queue.append(Node((idxX,idxY),end,data[idxY][idxX]))
-
-    for e in queue:
-        if e.possition == start:
-            e.distanceFromStart = 0
-            e.cameFrom == start
-    sortQueue(queue)
-    beenTo = []
-    while queue[0].possition != end:
-        currNode = queue[0]
+            qObj = Node((idxX,idxY),end,data[idxY][idxX])
+            nodeRow.append(qObj)
+        nodeMap.append(nodeRow)
+    startNode = getQueueObjectByPos(nodeMap,start)
+    activeNodes.append(startNode)
+    startNode.distanceFromStart = 0
+    startNode.cameFrom == start
+    sortQueue(activeNodes)
+    beenTo = [[False for _ in range(width)]for _ in range(height)]
+    while activeNodes[0].possition != end:
+        currNode = activeNodes[0]
         possibleRutes = [(0,1),(0,-1),(1,0),(-1,0)]
 
         for rute in possibleRutes:
             #loop Over possible routes
+ 
             destination = (currNode.possition[0] + rute[0],currNode.possition[1] + rute[1])
             if isValidRoute(destination,width,height):
+              
                 if data[destination[1]][destination[0]] <= currNode.height + 1:
+                  
                     if not wasVisited(beenTo,destination):
+                      
                         #route is Valid
-                        nodeToUpdate = getQueueObjectByPos(queue,destination)
+            
+                        nodeToUpdate = getQueueObjectByPos(nodeMap,destination)
+                        if not nodeToUpdate in activeNodes:
+                            activeNodes.append(nodeToUpdate)
+
                         newDistance = currNode.distanceFromStart + 1
                         if newDistance < nodeToUpdate.distanceFromStart:
                             nodeToUpdate.distanceFromStart = newDistance
                             nodeToUpdate.cameFrom = currNode.possition
-
+         
         #after all the routes have been checked delete the node
-        beenTo.append(queue.pop(0))   
-        sortQueue(queue)  
-    
-    return getQueueObjectByPos(queue,end).distanceFromStart
+        readyElement = activeNodes.pop(0)
+        beenTo[readyElement.possition[1]][readyElement.possition[0]] = True
+        sortQueue(activeNodes)  
+
+        if len(activeNodes)==0:
+            break
+
+    return getQueueObjectByPos(nodeMap,end).distanceFromStart
 
 def task1():
     data = []
