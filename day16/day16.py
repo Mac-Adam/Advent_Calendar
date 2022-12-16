@@ -32,7 +32,7 @@ def getRouteValue(route):
 
 
 
-def getRoute(tunel,route=[],opened =[],minutesLeft = 30):
+def getRoute(tunel,route=[],opened = [],beenTo = [],minutesLeft = 30):
     if minutesLeft == 0:   
         global currMax
         routeVal = getRouteValue(route)
@@ -43,11 +43,15 @@ def getRoute(tunel,route=[],opened =[],minutesLeft = 30):
         return
     if tunel.rate !=0:
         if type (route[-1] ) == str and not route[-1] in opened:
-            getRoute(tunel,route+[("open",tunel.rate)],opened+[route[-1]],minutesLeft-1)
+            getRoute(tunel,route+[("open",tunel.rate)],opened+[route[-1]],beenTo,minutesLeft-1)
     
     for t in tunel.tunels:
-        getRoute(t,route+[t.name],opened,minutesLeft-1)
-   
+        if not t.name in beenTo:
+
+            getRoute(t,route+[t.name],opened,beenTo+[tunel.name],minutesLeft-1)
+    for t in tunel.tunels:
+        if t.name in beenTo:
+            getRoute(t,route+[t.name],opened,beenTo+[tunel.name],minutesLeft-1)
 
 
 
