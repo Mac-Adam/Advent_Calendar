@@ -1,6 +1,7 @@
-
+import time
 currMax = 0
-
+currMaxAllCombinations = 0
+checked = 0
 class Tunel:
 
     def __init__(self,name,tunels,rate):
@@ -98,23 +99,60 @@ def getQidxByName(q,name):
 
 
 
-def calcPath(start,path):
-    sum = 0
+def maximmizePressureWithElephant(startYou,startElephant,path=[],pressure = 0,minutesLeftYou = 26,minutesLeftElephant = 26):
+   
+
+    hasOptionsYou = False
+    hasOptionsELephant = False
+    values = []
+    setOfRoutes = set(startYou.routes + startElephant.routes)   
+    for route in setOfRoutes:
+        if route.leadsTo.name in path:
+            continue
+
+        
+        
+        if route in startElephant.routes:
+            minutesLeftAfterOpeningElephant = minutesLeftElephant-1-route.lenght
+            if minutesLeftAfterOpeningElephant<0:
+                continue
+            hasOptionsELephant = True
+            values.append(maximmizePressureWithElephant(
+                startYou,
+                route.leadsTo,
+                path+[route.leadsTo.name],
+                pressure + route.leadsTo.rate*(minutesLeftAfterOpeningElephant),
+                minutesLeftYou,
+                minutesLeftAfterOpeningElephant
+                ))
+        if route in startYou.routes:
+            minutesLeftAfterOpeningYou = minutesLeftYou-1-route.lenght
+            if minutesLeftAfterOpeningYou<0:
+                continue
+            hasOptionsYou = True
+            values.append(maximmizePressureWithElephant(
+                route.leadsTo,
+                startElephant,
+                path+[route.leadsTo.name],
+                pressure + route.leadsTo.rate*(minutesLeftAfterOpeningYou),
+                minutesLeftAfterOpeningYou,
+                minutesLeftElephant
+                ))
+
+    if hasOptionsYou or hasOptionsELephant:
+        return max(values)
+    global currMax
+    if pressure > currMax:
+        currMax = pressure
+        print(f"new Max: {pressure}")
+    return pressure
+   
 
 
 def maximmizePressure(start,path=[],pressure = 0,minutesLeft = 30):
-    # test = [
-    #     [],
-    #     ['DD'],
-    #     ['DD','BB'],
-    #     ['DD','BB','JJ'],
-    #     ['DD','BB','JJ','HH'],
-    #     ['DD','BB','JJ','HH','EE'],
-    #     ['DD','BB','JJ','HH','EE','CC'],
-    # ]
-
+   
     hasOptions = False
-
+    values = []
     for route in start.routes:
         if route.leadsTo.name in path:
             continue
@@ -122,25 +160,16 @@ def maximmizePressure(start,path=[],pressure = 0,minutesLeft = 30):
         if minutesLeftAfterOpening<0:
             continue
         hasOptions = True
-        # if path + [route.leadsTo.name] in test:
-        #     print("-"*40)
-        #     print(f"currently at: {start.name}")
-        #     print(route)
-        #     print(f"Time Left: {minutesLeft} time after openning: {minutesLeftAfterOpening} Opening {route.leadsTo.name} ")
-
-        maximmizePressure(
+        values.append(maximmizePressure(
             route.leadsTo,
             path+[route.leadsTo.name],
             pressure + route.leadsTo.rate*(minutesLeftAfterOpening),
             minutesLeftAfterOpening
-            )
-    if not hasOptions:
-        global currMax
-        if pressure >= currMax:
-            print(pressure)
-            print(path)
-            currMax = pressure
+            ))
 
+    if not hasOptions:
+        return pressure
+    return max(values)
 
 def shortestLen(start,endName):
 
@@ -192,15 +221,10 @@ def getTunels(data):
             rate = int(line.split(";")[0].split("=")[1])
             data.append(Tunel(valeIdx,tunels,rate))
 
-def task1():
-    tunels = []
-    getTunels(tunels)
+def getValves(valves, tunels):
     for t in tunels:
         t.link(tunels)
-        print(t)
 
-
-    valves = []
     for t in tunels:
         if t.rate != 0:
             valves.append(Valve(t.name,t.rate,t))
@@ -223,9 +247,47 @@ def task1():
                 dist = shortestLen(potenitialStartTunel,v.name)
                 routes.append(Route(dist,v))
             startValve.routes = routes
+    return startValve
 
-    maximmizePressure(startValve )
+def valveCombinations(start,valvesleft,you = [], elephant = []):
+    if len(valvesleft) == 0:
+        global checked
+        checked +=1
+        newVal = maximmizePressure(start,you,0,26) + maximmizePressure(start,elephant,0,26)
+        global currMaxAllCombinations
+        if newVal>currMaxAllCombinations:
+            currMaxAllCombinations = newVal
+            print(f"new max: {newVal} checked {checked} out of 32768")
+        return 1
+    newValve = valvesleft[-1]
+    return  valveCombinations(start,valvesleft[:-1],you+[newValve],elephant) + valveCombinations(start,valvesleft[:-1],you,elephant+[newValve])
+   
+   
 
+def task1():
+    tunels = []
+    getTunels(tunels)
+
+    valves = []
+    startValve = getValves(valves,tunels)
+   
+    print(maximmizePressure(startValve))
+
+def task2():
+    tunels = []
+    getTunels(tunels)
+
+    valves = []
+    startValve = getValves(valves,tunels)
+
+    valveNames = []
+    for valve in valves:
+        valveNames.append(valve.name)
+    #print(maximmizePressureWithElephant(startValve,startValve))
+    print(valveCombinations(startValve,valveNames))
+
+   
+   
 
 
     
@@ -236,5 +298,11 @@ def task1():
 
 
 if __name__ == "__main__":
+    s = time.time()
     task1()
+    print(f"Task1: {time.time()-s}")
+    s = time.time()
+    task2()
+    print(f"Task2: {time.time()-s}")
+    s = time.time()
     
