@@ -1,4 +1,4 @@
-import time
+
 def isValidMove(arena,rock,rockPos,move):
     rockAfterMove = []
     for r in rock:
@@ -32,7 +32,7 @@ def task1():
     ]
 
 
-    startTime = time.time()
+   
     with open("day17/data.txt") as file:
         jetMovementsDict = {
             ">":(1,0),
@@ -43,11 +43,33 @@ def task1():
         arena = [[0 for _ in range(7)] for _ in range(20)] # make 100% sure it won't overflow
         arena[0] = [1,1,1,1,1,1,1]
         currH = 1
+        realH = 1
+
         jetIdx = 0
+        hAterRocks = []
 
-
+        cycles = []
+        cycleH = dict()
 
         for rockIdx in range(iters):
+            if not 0 in arena[currH-1] and currH !=1:
+                if((rockIdx%5,jetIdx%len(jetPattern)) in cycles):
+
+                    cycleData =cycleH[(rockIdx%5,jetIdx%len(jetPattern))]
+
+                    cycleHeight = currH - cycleData[0]
+                    cycleLen = rockIdx-cycleData[1]
+                    cyclesFit = (iters-rockIdx)//(cycleLen)
+                    left = (iters-rockIdx)%cycleLen
+                
+                    #print(f"Cycle of len {cycleLen} of height {cycleHeight} can fit {cyclesFit} will need to calc {left}")
+                    print(f"This means H should be {currH+cycleHeight*cyclesFit + hAterRocks[cycleData[1]+left]}")
+                    input()
+                else:
+                    cycles.append((rockIdx%5,jetIdx%len(jetPattern)))
+                    cycleH[cycles[-1]] = (currH,rockIdx)
+
+
             rock = rocks[rockIdx%5]
             rockPos = [2,currH+3]
             while True:
@@ -69,16 +91,9 @@ def task1():
                     break
                     
                 rockPos[1]-=1
+            hAterRocks.append(currH)
 
-
-            if rockIdx %10000 == 0:
-                if rockIdx == 0:
-                    continue
-                timeSpent = time.time()-startTime
-
-                print(f"\r {rockIdx} out of {iters} time spent: {timeSpent} estimated time left: {(timeSpent/rockIdx)*(iters-rockIdx)}")
-
-
+          
                
 
         print(currH-1)
