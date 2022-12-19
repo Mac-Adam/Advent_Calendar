@@ -63,7 +63,7 @@ def task1():
                     left = (iters-rockIdx)%cycleLen
                 
                     #print(f"Cycle of len {cycleLen} of height {cycleHeight} can fit {cyclesFit} will need to calc {left}")
-                    print(f"This means H should be {currH+cycleHeight*cyclesFit + hAterRocks[cycleData[1]+left]}")
+                    print(f"This means H should be {currH+cycleHeight*cyclesFit + hAterRocks[cycleData[1]+left]-hAterRocks[cycleData[1]] +1}")
                     input()
                 else:
                     cycles.append((rockIdx%5,jetIdx%len(jetPattern)))
