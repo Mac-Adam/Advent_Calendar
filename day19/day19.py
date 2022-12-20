@@ -49,27 +49,27 @@ def getBuildPossibilities(possibilities,resources,blue,workingOn=(0,0,0,0)):
     if not addedSomething:
         return
 
+def subArr(a,b):
+    res =[]
+    for i in range(len(a)):
+        res.append(a[i]-b[i])
+    return res
+
+def allNegative(arr):
+    res = True
+    for a in arr:
+        if a>0:
+            res = False
+    return res
 
 def evaluateBluePrint(blue,robots=[1,0,0,0],resources=[0,0,0,0],timeLeft = 24):
-    #print(robots,resources,timeLeft)
-    if timeLeft <=0:
-        global currMax
-        if resources[3]>currMax:
-            print(f"new Max: {resources[3]}")
-            currMax = resources[3]
-
-        return resources[3]
-    newResources = []
-    for idx in range(4):
-        newResources.append(resources[idx] + robots[idx])
-    branchVals = [evaluateBluePrint(blue,robots,newResources,timeLeft-1)]
-    for robotid,robot in enumerate( blue.costs):
-        newRobots = robots[:]
-        if canBuild(resources,robot):
-            build(newResources,robot)
-            newRobots[robotid]+=1
-            branchVals.append(evaluateBluePrint(blue,newRobots,newResources,timeLeft-1))
-    return max(branchVals)
+  dif = subArr(blue.costs[3],robots)
+  for id,amount in enumerate(reversed(dif)):
+    if amount >=0:
+        dif = subArr(dif,blue.costs[2-id])
+        dif[2-id] = 0
+  print(dif)
+ 
 
 
 
