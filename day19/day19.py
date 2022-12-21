@@ -1,12 +1,22 @@
-currMax = 0
+import time
+
 
 class blueprint:
     def __init__(self,costs):
         self.costs = costs
+        max = []
+        for x in range(len(costs[0])):
+            high = 0
+            for i in range(len(costs)):
+                if costs[i][x]>high:
+                    high = costs[i][x]
+            max.append(high)
+        max.append(1000000)
+        self.max = max
 
 
 def getBlueprints(blueprints):
-    with open("day19/test.txt","r") as file:
+    with open("day19/data.txt","r") as file:
         for line in file:
             line = line.strip("\n")
             robotCostsLines = line.split(".")
@@ -14,9 +24,8 @@ def getBlueprints(blueprints):
             robotCosts.append((int(robotCostsLines[0].split("Each ore robot costs")[-1].strip("ore")),0,0))
             robotCosts.append((int(robotCostsLines[1].split("Each clay robot costs")[-1].strip("ore")),0,0))
             robotCosts.append((int(robotCostsLines[2].split("Each obsidian robot costs")[-1].split("ore and")[0]),int(robotCostsLines[2].split("Each obsidian robot costs")[-1].split("ore and")[1].strip("clay")),0))
-            robotCosts.append((0,int(robotCostsLines[3].split("Each geode robot costs")[-1].split("ore and")[0]),int(robotCostsLines[3].split("Each geode robot costs")[-1].split("ore and")[1].strip("obsidian"))))
+            robotCosts.append((int(robotCostsLines[3].split("Each geode robot costs")[-1].split("ore and")[0]),0,int(robotCostsLines[3].split("Each geode robot costs")[-1].split("ore and")[1].strip("obsidian"))))
             blueprints.append(blueprint(robotCosts))
-
 def canBuild(resources,cost):
     can = True
     for i,c in enumerate(cost):
@@ -24,59 +33,75 @@ def canBuild(resources,cost):
             can = False
     return can
 
+
+def canBuildInMin(resources,robots,cost):
+    for i,c in enumerate(cost):
+        if c > 0 and robots[i]==0:
+            return -1
+    tempResources = resources[:]
+    minutes = 0
+    while not canBuild(tempResources,cost):
+        addResources(tempResources,robots)
+        minutes+=1
+    return minutes
+
 def build(resources,cost):
     for i,c in enumerate(cost):
         resources[i]-=c
 
+def addResources(resources,robots,min = 1):
+    for i,r in enumerate(robots):
+        resources[i]+=r*min
 
-def buildMany(resources,blue,whatTobuild):
-    for robotId,amunt in enumerate(whatTobuild):
-        for resourceId,c in enumerate(blue.costs[robotId]):
-            resources[resourceId]-=c*amunt
-
-def getBuildPossibilities(possibilities,resources,blue,workingOn=(0,0,0,0)):
-    addedSomething = False
-    for id,robot in enumerate(blue.costs):
-        if canBuild(resources,robot):
-            newResources = resources[:]
-            build(newResources,robot)
-            newWorkingOn= list(workingOn[:])
-            newWorkingOn[id]+=1
-            newWorkingOn = tuple(newWorkingOn)
-            possibilities.add(newWorkingOn)
-            getBuildPossibilities(possibilities,newResources,blue,newWorkingOn)
-    possibilities.add(workingOn)
-    if not addedSomething:
-        return
-
-def subArr(a,b):
-    res =[]
-    for i in range(len(a)):
-        res.append(a[i]-b[i])
-    return res
-
-def allNegative(arr):
-    res = True
-    for a in arr:
-        if a>0:
-            res = False
-    return res
 
 def evaluateBluePrint(blue,robots=[1,0,0,0],resources=[0,0,0,0],timeLeft = 24):
-  dif = subArr(blue.costs[3],robots)
-  for id,amount in enumerate(reversed(dif)):
-    if amount >=0:
-        dif = subArr(dif,blue.costs[2-id])
-        dif[2-id] = 0
-  print(dif)
- 
+    
+    canBuild = False
+    possibilities = []
+   
+    for id,robot in enumerate(blue.costs):
+        if robots[id] >= blue.max[id]:
+            continue 
+        minutes = canBuildInMin(resources,robots,robot)
+        if minutes<0:
+            continue
+        if timeLeft-minutes-1 <=0:
+            continue
+       
+       
+        canBuild = True
+        newResources = resources[:]
+       
+        addResources(newResources,robots,minutes+1)
+   
+        build(newResources,robot)
+         
+        newRobots = robots[:]
+        newRobots[id] +=1
+       
 
+        possibilities.append(evaluateBluePrint(blue,newRobots,newResources,timeLeft-minutes-1))
+    if canBuild:
+        return max(possibilities)
+
+    res = resources[3]+robots[3]*timeLeft
+
+    return res
+
+   
 
 
 def task1():
+    start = time.time()
     blueprints = []
     getBlueprints(blueprints)
-    print(evaluateBluePrint(blueprints[0]))
+    sum = 0
+    for id,blue in enumerate(blueprints):
+
+        sum+= (id+1)*evaluateBluePrint(blue)
+        now = time.time()
+        print(f"evaluated {id} time elapsed: {now-start}")
+    print(sum)
 
 
 if __name__ == "__main__":
