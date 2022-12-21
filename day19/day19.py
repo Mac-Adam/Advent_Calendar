@@ -103,6 +103,21 @@ def task1():
         print(f"evaluated {id} time elapsed: {now-start}")
     print(sum)
 
+def task2():
+    start = time.time()
+    blueprints = []
+    getBlueprints(blueprints)
+    blueprints = blueprints[:3]
+    res = 1
+    for id,blue in enumerate(blueprints):
+        geodes = evaluateBluePrint(blue,timeLeft=32)
+        res*= geodes
+        now = time.time()
+        print(f"evaluated {id} max geodes is: {geodes} time elapsed: {now-start}")
+    print(res)
+
+
 
 if __name__ == "__main__":
-    task1()
+    #task1()
+    task2()
