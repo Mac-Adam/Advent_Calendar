@@ -35,6 +35,20 @@ def getVal(monkey,monkeyDict):
     if monkey.op == "/":
         return getVal(monkeyDict[monkey.a],monkeyDict) / getVal(monkeyDict[monkey.b],monkeyDict)
 
+def hasHuman(monkey,monkeyDict):
+    if monkey.name == 'humn':
+        return True
+    if monkey.num:
+        return False
+    return hasHuman(monkeyDict[monkey.a],monkeyDict) or hasHuman(monkeyDict[monkey.b],monkeyDict)
+
+def colapse(monkey,monkeyDict):
+    if monkey.num:
+        return
+    if not hasHuman(monkey,monkeyDict):
+        monkey.num = getVal(monkey,monkeyDict)
+    colapse(monkeyDict[monkey.a],monkeyDict)
+    colapse(monkeyDict[monkey.b],monkeyDict)
 
 
 
@@ -49,6 +63,30 @@ def task1():
     print(getVal(monkeyDict['root'],monkeyDict))
     print(f"task 1 in {end-start}")
 
+def fitNum(monkey,value,monkeyDict):
+    if monkey.name == 'humn':
+        return value
+    if hasHuman(monkeyDict[monkey.a],monkeyDict):
+        if monkey.op == '+':
+            return fitNum(monkeyDict[monkey.a],value-monkeyDict[monkey.b].num,monkeyDict)
+        if monkey.op == '-':
+            return fitNum(monkeyDict[monkey.a],value+monkeyDict[monkey.b].num,monkeyDict)
+        if monkey.op == '*':
+            return fitNum(monkeyDict[monkey.a],value/monkeyDict[monkey.b].num,monkeyDict)
+        if monkey.op == '/':
+            return fitNum(monkeyDict[monkey.a],value*monkeyDict[monkey.b].num,monkeyDict)
+    if hasHuman(monkeyDict[monkey.b],monkeyDict):
+        if monkey.op == '+':
+            return fitNum(monkeyDict[monkey.b],value-monkeyDict[monkey.a].num,monkeyDict)
+        if monkey.op == '-':
+            return fitNum(monkeyDict[monkey.b],monkeyDict[monkey.a].num-value,monkeyDict)
+        if monkey.op == '*':
+            return fitNum(monkeyDict[monkey.b],value/monkeyDict[monkey.a].num,monkeyDict)
+        if monkey.op == '/':
+            return fitNum(monkeyDict[monkey.b],monkeyDict[monkey.a].num/value,monkeyDict)
+
+
+
 def  task2():
     start = time.time()
     monkeys = []
@@ -59,13 +97,17 @@ def  task2():
     end = time.time()
     i = 1
     root = monkeyDict['root']
-    while True:
-        monkeyDict['humn'].num = i
-        if getVal(monkeyDict[root.a],monkeyDict) == getVal(monkeyDict[root.b],monkeyDict):
-            break
-        i+=1
-        print(f"\r{i}",end="")
-    print(f"\ntask 2 in {end-start}")
+    
+    colapse(monkeyDict[root.a],monkeyDict)
+    colapse(monkeyDict[root.b],monkeyDict)
+    if hasHuman(monkeyDict[root.a],monkeyDict):
+        print(f"\ntask 2 in {end-start}")
+        print(fitNum(monkeyDict[root.a],monkeyDict[root.b].num,monkeyDict))
+    if hasHuman(monkeyDict[root.b],monkeyDict):
+        print(f"\ntask 2 in {end-start}")
+        print(fitNum(monkeyDict[root.b],monkeyDict[root.a].num,monkeyDict))
+
+    
 
 if __name__ == "__main__":
     task1()
