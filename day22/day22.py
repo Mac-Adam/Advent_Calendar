@@ -141,5 +141,163 @@ def task1():
         'U':3
     }
     print(1000*(pos[1]+1)+4*(pos[0]+1)+scoreDir[direction])
+
+def chunkify(map,mesh):
+    chunkSize = 50
+    chunks = []
+    for i in range(len(map)//chunkSize):
+        meshRow = []
+        chunksRow = []
+        for j in range(len(map[0])//chunkSize):
+            chunk = []
+            if 0 in map[i*chunkSize][j*chunkSize:(j+1)*chunkSize]:
+                meshRow.append(1)
+            else:
+                meshRow.append(0)
+            
+            for x in range(chunkSize):
+                chunk.append(map[i*chunkSize+x][j*chunkSize:(j+1)*chunkSize])
+            chunksRow.append(chunk)
+        mesh.append(meshRow)
+        chunks.append(chunksRow)
+    return chunks
+
+
+
+
+def rotateRight(chunk):
+    size = len(chunk)
+    newChunk = []
+    for oldX in range(size):
+        newRow = []
+        for oldY in reversed(range(size)):
+            newRow.append(chunk[oldY][oldX])
+        newChunk.append(newRow)
+    return newChunk
+
+def rotateLeft(chunk):
+    size = len(chunk)
+    newChunk = []
+    for oldX in reversed(range(size)):
+        newRow = []
+        for oldY in range(size):
+            newRow.append(chunk[oldY][oldX])
+        newChunk.append(newRow)
+    return newChunk
+
+def flipHorizontaly(chunk):
+    newChunk = []
+    for row in chunk:
+       newChunk.append(row[::-1])
+    return newChunk
+
+def flipVerticaly(chunk):
+    size = len(chunk)
+    newChunk = []
+    for oldY in reversed(range(size)):
+        newRow = []
+        for oldX in range(size):
+            newRow.append(chunk[oldY][oldX])
+        newChunk.append(newRow)
+    return newChunk
+
+
+
+
+def task2():
+    chunkSize = 50
+    map = []
+    moves = []
+    mesh = []
+    getdata(map,moves)
+    chunks = chunkify(map,mesh)
+    for r in mesh:
+        print(r)
+    print()
+
+    # strip = 2
+    # pos=(0,11)
+    # direction ='U'
+
+    # strips = [
+    #     flipVerticaly(chunks[1][0])+chunks[0][2]+ chunks[1][2]+chunks[2][2],
+    #     rotateRight(chunks[1][0])+rotateRight(chunks[1][1])+rotateRight(chunks[1][2])+chunks[2][3],
+    #     rotateRight(chunks[2][2]) + rotateRight(chunks[2][3]) + rotateLeft(chunks[0][2]) + chunks[1][1]
+    #     ]
+  
+    # stripTranslation = {
+    #     (0,0):(1,0,1),
+    #     (0,1):(2,2,1),
+    #     (0,2):(1,2,-1),
+    #     (0,3):(2,0,-1),
+    #     (1,0):(0,0,-1),
+    #     (1,1):(2,3,1),
+    #     (1,2):(0,2,1),
+    #     (1,3):(2,1,-1),
+    #     (2,0):(0,3,1),
+    #     (2,1):(1,3,1),
+    #     (2,2):(0,1,-1),
+    #     (2,3):(1,1,-1)
+    # }
+
+    strip = 1
+    pos=(0,150)
+    direction ='U'
+
+    strips = [
+        chunks[0][1]+chunks[1][1]+ chunks[2][1]+rotateLeft(chunks[3][0]),
+        rotateRight(chunks[2][0])+rotateRight(chunks[2][1])+rotateLeft(chunks[0][2])+rotateLeft(chunks[0][1]),
+        chunks[2][0] + chunks[3][0] + chunks[0][2] + rotateLeft(chunks[1][1])
+    ]
+  
+    stripTranslation = {
+        (0,0):(1,3,1),
+        (0,1):(2,3,1),
+        (0,2):(1,1,-1),
+        (0,3):(2,1,-1),
+        (1,0):(2,0,1),
+        (1,1):(0,2,1),
+        (1,2):(2,2,-1),
+        (1,3):(0,0,-1),
+        (2,0):(1,0,-1),
+        (2,1):(0,3,1),
+        (2,2):(1,2,1),
+        (2,3):(0,1,-1)
+    }
+
+    dirLookup = {
+        'R':{
+            (-1,'U'):'D',
+            (1,'U'):'U',
+            (-1,'D'):'U',
+            (1,'D'):'D',
+            },
+        'L':{
+            (1,'U'):'D',
+            (-1,'U'):'U',
+            (1,'D'):'U',
+            (-1,'D'):'D',
+            }
+    }
+    for move in moves:
+        if move in dirLookup:
+            chunkId = pos[1]//chunkSize
+            chunkPos = pos[0],pos[1]%chunkSize
+            afterMove = stripTranslation[(strip,chunkId)]
+            strip = afterMove[0]
+            newChunkId = afterMove[1]
+            if afterMove[2] == -1:
+                newChunkPos = chunkSize-chunkPos[1]-1,chunkPos[0]
+            else:
+                newChunkPos = chunkPos[1],chunkSize-chunkPos[0]-1
+            direction = dirLookup[move][(afterMove[2],direction)]
+            pos = newChunkPos[0],newChunkId*chunkSize+newChunkPos[1]
+        else:
+            pos = makeAMove(pos,direction,int(move),strips[strip])
+        #print(move,pos,direction,strip)
+        
+    print(strip,pos,direction)
+
 if __name__ == '__main__':
     task1()
+    task2()
